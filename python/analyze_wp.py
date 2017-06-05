@@ -203,14 +203,58 @@ def make_wp_plot(background_wps, signal_wps, bounds) :
     gdef.SetMarkerSize(2*gdef.GetMarkerSize())
 
     gint = r.TGraph(1)
-    gint.SetMarkerStyle(39)
-    gint.SetMarkerColor(r.kBlue)
+    gint.SetMarkerStyle(24)
+    gint.SetMarkerColor(r.kBlack)
     gint.SetMarkerSize(1.5*gint.GetMarkerSize())
 
     gtest = r.TGraph(0)
     gtest.SetMarkerStyle(20)
     gtest.SetMarkerColor(r.kMagenta)
     gtest.SetMarkerSize(0.5*gtest.GetMarkerSize())
+
+    g_map = {}
+    ids = ["medium_medium", "medium_tight", "tight_medium", "tight_tight"]
+    isos = ["GradientLoose", "Gradient", "Loose", "LooseTrackOnly", "FixedCutTightTrackOnly"]
+
+    markers = {}
+    for lep_id in ids :
+        for lep_iso in isos :
+            key = "%s_%s"%(lep_id, lep_iso)
+
+            color = None
+            marker = None
+
+            if lep_id == "medium_medium" :
+                color = 4
+            elif lep_id == "medium_tight" :
+                color = 3
+            elif lep_id == "tight_medium" :
+                color = 6
+            elif lep_id == "tight_tight" :
+                color = 7
+
+            if lep_iso == "GradientLoose" :
+                marker = 20
+            elif lep_iso == "Gradient" :
+                marker = 22
+            elif lep_iso == "Loose" :
+                marker = 23
+            elif lep_iso == "LooseTrackOnly" :
+                marker = 21
+            elif lep_iso == "FixedCutTightTrackOnly" :
+                marker = 34 
+
+            markers[key] = [color, marker]
+
+    for lep_id in ids :
+        for lep_iso in isos :
+            key = "%s_%s"%(lep_id, lep_iso)
+            g = r.TGraph(0)
+            g.SetMarkerStyle(markers[key][1])
+            g.SetMarkerColor(markers[key][0])
+            g.SetMarkerSize(0.75*g.GetMarkerSize())
+            g_map[key] = g
+            
 
     wp_map_sig = {}
     wp_map_bkg = {}
@@ -239,11 +283,14 @@ def make_wp_plot(background_wps, signal_wps, bounds) :
         if wp_is_interesting(sig_wp) :
             gint.SetPoint(0, x, y)
 
-        if sig_wp.ele_id=="medium" and sig_wp.muo_id=="medium" and sig_wp.ele_iso=="LooseTrackOnly" and test_OR(sig_wp) :
-        #if sig_wp.ele_id=="medium" and sig_wp.muo_id=="medium" and test_OR(sig_wp) :
-            gtest.SetPoint(gtest.GetN(), x, y)
+        key = "%s_%s_%s"%(sig_wp.ele_id, sig_wp.muo_id, sig_wp.ele_iso)
+        g_map[key].SetPoint(g_map[key].GetN(), x, y)
 
-        g.SetPoint(iwp, x, y)
+        #if sig_wp.ele_id=="medium" and sig_wp.muo_id=="medium" and sig_wp.ele_iso=="LooseTrackOnly" and test_OR(sig_wp) :
+        ##if sig_wp.ele_id=="medium" and sig_wp.muo_id=="medium" and test_OR(sig_wp) :
+        #    gtest.SetPoint(gtest.GetN(), x, y)
+
+        #g.SetPoint(iwp, x, y)
 
         if x > 1.0 :
             n_over += 1
@@ -253,16 +300,91 @@ def make_wp_plot(background_wps, signal_wps, bounds) :
             
             #print "IDX: %d = (%.2f, %.2f)"%(sig_wp.idx, x, y)
 
+    ############### make legend
+
+    # entries for color (lepton id)
+
+    gl0 = r.TGraph(0)
+    gl0.SetLineColor(4)
+    gl0.SetLineWidth(5*gl0.GetLineWidth())
+    gl0.SetMarkerStyle(21)
+
+    gl1 = r.TGraph(0)
+    gl1.SetLineColor(3)
+    gl1.SetLineWidth(5*gl1.GetLineWidth())
+    gl1.SetMarkerStyle(21)
+
+    gl2 = r.TGraph(0)
+    gl2.SetLineColor(6)
+    gl2.SetLineWidth(5*gl2.GetLineWidth())
+    gl2.SetMarkerStyle(21)
+
+    gl3 = r.TGraph(0)
+    gl3.SetLineColor(7)
+    gl3.SetLineWidth(5*gl3.GetLineWidth())
+    gl3.SetMarkerStyle(21)
+
+    leg = r.TLegend(0.34, 0.73, 0.54, 0.88)
+    leg.AddEntry(gl0, "(med, med)", "l")
+    leg.AddEntry(gl1, "(med, tight)", "l")
+    leg.AddEntry(gl2, "(tight, med)", "l")
+    leg.AddEntry(gl3, "(tight, tight)", "l")
+
+    # entries for isolation (shape)
+
+    # GradientLoose
+
+    gs0 = r.TGraph(0)
+    gs0.SetMarkerSize(2*gs0.GetMarkerSize())
+    gs0.SetMarkerStyle(20)
+
+    # Gradient
+    gs1 = r.TGraph(0)
+    gs1.SetMarkerSize(2*gs1.GetMarkerSize())
+    gs1.SetMarkerStyle(22)
+
+    # Loose
+    gs2 = r.TGraph(0)
+    gs2.SetMarkerSize(2*gs2.GetMarkerSize())
+    gs2.SetMarkerStyle(23)
+
+    # LooseTrackOnly
+    gs3 = r.TGraph(0)
+    gs3.SetMarkerSize(2*gs3.GetMarkerSize())
+    gs3.SetMarkerStyle(21)
+
+    # FixedCutTightTrackOnly
+    gs4 = r.TGraph(0)
+    gs4.SetMarkerSize(2*gs4.GetMarkerSize())
+    gs4.SetMarkerStyle(34)
+
+    leg2 = r.TLegend(0.12, 0.73, 0.32, 0.88)
+    leg2.AddEntry(gs0, "GradientLoose", "p")
+    leg2.AddEntry(gs1, "Gradient", "p")
+    leg2.AddEntry(gs2, "Loose", "p")
+    leg2.AddEntry(gs3, "LooseTrackOnly", "p")
+    leg2.AddEntry(gs4, "FixedCutTightTrackOnly", "p")
+
+    
+
     c.cd()
     axis.Draw("axis")
     c.Update()
-    g.Draw("P same")
+    for key in g_map.keys() :
+        g_map[key].Draw("P same")
+    
+    #g.Draw("P same")
     c.Update()
     gdef.Draw("P same")
     c.Update()
     gint.Draw("P same")
     c.Update()
-    gtest.Draw("P same")
+    #gtest.Draw("P same")
+    #c.Update()
+
+    leg.Draw()
+    c.Update()
+    leg2.Draw()
     c.Update()
 
     c.SaveAs("wp_ana_curve.eps")
